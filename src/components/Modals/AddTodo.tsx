@@ -1,5 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import {
+  onSnapshot,
+  query,
+  collection,
+  orderBy,
+  addDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { setTodo, selectTodo } from "../../features/todoSlice";
+
+import db from "../../config/firebase";
 
 interface IFormState {
   name: string;
@@ -19,15 +32,47 @@ interface IProps {
 
 const AddTodo = ({ setOpenModal }: IProps) => {
   const [formState, setFormState] = useState<IFormState>(initialFormState);
+  const todos = useAppSelector(selectTodo);
+  useEffect(() => {
+    if (todos && todos?.id) {
+      setFormState({
+        name: todos?.name,
+        location: todos?.location,
+        cgpa: todos?.cgpa,
+      });
+    }
+  }, [todos]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormState({ ...formState, [name]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(formState);
+
+    const todosRef = doc(db, "posts", todos?.id);
+    if (todos && todos?.id) {
+      await updateDoc(todosRef, {
+        name: formState.name,
+        location: formState.location,
+        cgpa: formState.cgpa,
+      });
+    } else {
+      try {
+        let docRef = await addDoc(collection(db, "posts"), {
+          name: formState.name,
+          location: formState.location,
+          cgpa: formState.cgpa,
+        });
+        console.log("Document written with ID: ", docRef.id);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    setOpenModal(false)
+
   };
 
   return (

@@ -1,21 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowSmallUpIcon } from "@heroicons/react/24/solid";
 import { ArrowSmallDownIcon } from "@heroicons/react/24/solid";
 import TableRow from "../components/TableRow";
 import AddTodo from "../components/Modals/AddTodo";
-
-{
-  /* <ArrowSmallUpIcon className="h-6 w-6 text-gray-500" /> */
-}
+import {
+  onSnapshot,
+  query,
+  collection,
+  orderBy,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc
+} from "firebase/firestore";
+import db from "../config/firebase";
 
 const Home = () => {
-  const [openModal, setOpenModal] = useState<boolean>(true);
+  const [openModal, setOpenModal] = useState<boolean>(false);
+
+  const [postData, setPostsData] = useState([]);
+  useEffect(() => {
+    getData();
+  }, []);
+
+  const getData = async () => {
+    try {
+      const queryRef = query(
+        collection(db, "posts")
+      );
+      const docRef = await onSnapshot(queryRef, (querySnapshot) => {
+        setPostsData(
+          // @ts-ignore
+          querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  console.log(postData, "postData");
+
+  const handleDeleteTodo = async(id : string) => {
+    await deleteDoc(doc(db, "posts", id))
+  };
 
   return (
     <>
-    {
-        openModal && <AddTodo setOpenModal={setOpenModal}/>
-    }
+      {openModal && <AddTodo setOpenModal={setOpenModal} />}
       <div className="w-full h-screen bg-white flex flex-col justify-center items-center">
         <div className="w-full max-w-2xl ">
           <table className="w-full">
@@ -53,8 +85,12 @@ const Home = () => {
               </tr>
             </thead>
             <tbody className="bg-blue-200">
-              <TableRow />
-              <TableRow />
+                {
+                    postData.map((item, index) =>(
+                        <TableRow handleDeleteTodo={handleDeleteTodo} todo={item} setOpenModal={setOpenModal}/>
+                    ))
+                }
+             
             </tbody>
           </table>
         </div>
