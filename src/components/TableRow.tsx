@@ -14,8 +14,9 @@ interface IProps {
   handleDeleteTodo: (id: string) => void;
   todo: IData;
   setOpenModal : React.Dispatch<React.SetStateAction<boolean>>;
+  index : number;
 }
-const TableRow = ({ handleDeleteTodo, todo, setOpenModal }: IProps) => {
+const TableRow = ({ handleDeleteTodo, todo, setOpenModal,index }: IProps) => {
     const dispatch = useAppDispatch();
     const handleEditTodo = () => {
         setOpenModal(true);
@@ -25,13 +26,14 @@ const TableRow = ({ handleDeleteTodo, todo, setOpenModal }: IProps) => {
                 name: todo?.name,
                 location: todo?.location,
                 cgpa: todo?.cgpa,
+                type : 'update'
             })
         )
     }
   return (
     <>
       <tr className="text-center border-2 border-white">
-        <td className="p-2">1</td>
+        <td className="p-2">{index + 1}</td>
         <td className="p-2">{todo?.name}</td>
         <td className="p-2">{todo?.location}</td>
         <td className="p-2">{todo?.cgpa}</td>

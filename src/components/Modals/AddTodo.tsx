@@ -10,7 +10,7 @@ import {
   doc,
 } from "firebase/firestore";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setTodo, selectTodo } from "../../features/todoSlice";
+import { setTodo, selectTodo, setEmpty } from "../../features/todoSlice";
 
 import db from "../../config/firebase";
 
@@ -26,13 +26,24 @@ const initialFormState: IFormState = {
   cgpa: "",
 };
 
+interface IData {
+  id: string;
+  name: string;
+  location: string;
+  cgpa: string;
+  type: string;
+}
+
 interface IProps {
   setOpenModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AddTodo = ({ setOpenModal }: IProps) => {
   const [formState, setFormState] = useState<IFormState>(initialFormState);
-  const todos = useAppSelector(selectTodo);
+  const todos: IData = useAppSelector(selectTodo);
+  console.log(todos, "todos")
+  const dispatch = useAppDispatch();
+  // console.log("todos", todos);
   useEffect(() => {
     if (todos && todos?.id) {
       setFormState({
@@ -51,14 +62,26 @@ const AddTodo = ({ setOpenModal }: IProps) => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const todosRef = doc(db, "posts", todos?.id);
-    if (todos && todos?.id) {
-      await updateDoc(todosRef, {
-        name: formState.name,
-        location: formState.location,
-        cgpa: formState.cgpa,
-      });
-    } else {
+    // console.log("Document:");
+    if (todos.type === "update") {
+      try {
+        const todosRef = doc(db, "posts", todos?.id);
+        // console.log("Document data:", todosRef);
+        await updateDoc(todosRef, {
+          name: formState.name,
+          location: formState.location,
+          cgpa: formState.cgpa,
+          type: "update",
+        });
+
+        dispatch(
+          setEmpty()
+        )
+      } catch (error) {
+        console.log("Error updating document: ", error);
+      }
+    } else if (todos.type === "add") {
+      // console.log("No such document!");
       try {
         let docRef = await addDoc(collection(db, "posts"), {
           name: formState.name,
@@ -71,8 +94,7 @@ const AddTodo = ({ setOpenModal }: IProps) => {
       }
     }
 
-    setOpenModal(false)
-
+    setOpenModal(false);
   };
 
   return (
@@ -118,6 +140,7 @@ const AddTodo = ({ setOpenModal }: IProps) => {
               />
 
               <button
+                type="submit"
                 className="bg-blue-500 hover:bg-blue-600 px-4 py-2 w-full 
               text-white font-medium shadow-lg shadow-blue-300 rounded-md "
               >

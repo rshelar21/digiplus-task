@@ -87,7 +87,7 @@ const Home = () => {
             <tbody className="bg-blue-200">
                 {
                     postData.map((item, index) =>(
-                        <TableRow handleDeleteTodo={handleDeleteTodo} todo={item} setOpenModal={setOpenModal}/>
+                        <TableRow handleDeleteTodo={handleDeleteTodo} todo={item} setOpenModal={setOpenModal} index={index}/>
                     ))
                 }
              
