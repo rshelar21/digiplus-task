@@ -3,6 +3,7 @@ import { ArrowSmallUpIcon } from "@heroicons/react/24/solid";
 import { ArrowSmallDownIcon } from "@heroicons/react/24/solid";
 import TableRow from "../components/TableRow";
 import AddTodo from "../components/Modals/AddTodo";
+import TableHeading from "../components/TableHeading";
 import {
   onSnapshot,
   query,
@@ -11,24 +12,36 @@ import {
   addDoc,
   getDocs,
   deleteDoc,
-  doc
+  doc,
 } from "firebase/firestore";
 import db from "../config/firebase";
+interface i {
+  [key: string]: any; //boolean
+}
+
+interface IData extends i {
+  id: string;
+  name: string;
+  location: string;
+  cgpa: string;
+  type: string;
+  index: number;
+}
+
+const tableColumnTitles = ["Name", "Location", "CGPA"];
 
 const Home = () => {
   const [openModal, setOpenModal] = useState<boolean>(false);
 
-  const [postData, setPostsData] = useState([]);
+  const [postData, setPostsData] = useState<IData[]>([]);
   useEffect(() => {
     getData();
   }, []);
 
   const getData = async () => {
     try {
-      const queryRef = query(
-        collection(db, "posts")
-      );
-      const docRef = await onSnapshot(queryRef, (querySnapshot) => {
+      const queryRef = query(collection(db, "posts"));
+      const docRef = onSnapshot(queryRef, (querySnapshot) => {
         setPostsData(
           // @ts-ignore
           querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
@@ -39,10 +52,27 @@ const Home = () => {
     }
   };
 
-  console.log(postData, "postData");
+  const handleDeleteTodo = async (id: string) => {
+    await deleteDoc(doc(db, "posts", id));
+  };
 
-  const handleDeleteTodo = async(id : string) => {
-    await deleteDoc(doc(db, "posts", id))
+  const handleSortItem = (type: string, orderBy: string) => {
+    if (orderBy === "AES") {
+      const sortedData = postData.sort((a, b) => {
+        return a[type] < b[type] ? 1 : -1;
+      });
+
+      setPostsData([...sortedData]);
+    } else if (orderBy === "DESC") {
+      const sortedData = postData.sort((a, b) => {
+        return a[type] < b[type] ? -1 : 1;
+      });
+
+      setPostsData([...sortedData]);
+    } else {
+      const sortedData = postData.reverse();
+      setPostsData([...sortedData]);
+    }
   };
 
   return (
@@ -56,41 +86,38 @@ const Home = () => {
                 <th className="p-2 ">
                   <div className="flex">
                     <span>Row Num</span>
-                    <ArrowSmallUpIcon className="h-6 w-6 text-gray-500" />
-                    <ArrowSmallDownIcon className="h-6 w-6 text-gray-500" />
+                    <ArrowSmallUpIcon
+                      className="h-6 w-6 text-gray-500"
+                      onClick={() => handleSortItem("rownum", "")}
+                    />
+
+                    <ArrowSmallDownIcon
+                      className="h-6 w-6 text-gray-500"
+                      onClick={() => handleSortItem("rownum", "")}
+                    />
                   </div>
                 </th>
-                <th className="p-2 ">
-                  <div className="flex">
-                    <span>Name</span>
-                    <ArrowSmallUpIcon className="h-6 w-6 text-gray-500" />
-                    <ArrowSmallDownIcon className="h-6 w-6 text-gray-500" />
-                  </div>
-                </th>
-                <th className="p-2">
-                  <div className="flex">
-                    <span>Location</span>
-                    <ArrowSmallUpIcon className="h-6 w-6 text-gray-500" />
-                    <ArrowSmallDownIcon className="h-6 w-6 text-gray-500" />
-                  </div>
-                </th>
-                <th className="p-2">
-                  <div className="flex">
-                    <span>CGPA</span>
-                    <ArrowSmallUpIcon className="h-6 w-6 text-gray-500" />
-                    <ArrowSmallDownIcon className="h-6 w-6 text-gray-500" />
-                  </div>
-                </th>
+                {tableColumnTitles.map((item, index) => (
+                  <TableHeading
+                    handleSortItem={handleSortItem}
+                    title={item}
+                    key={index}
+                  />
+                ))}
+
                 <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-blue-200">
-                {
-                    postData.map((item, index) =>(
-                        <TableRow handleDeleteTodo={handleDeleteTodo} todo={item} setOpenModal={setOpenModal} index={index}/>
-                    ))
-                }
-             
+              {postData.map((item, index) => (
+                <TableRow
+                  handleDeleteTodo={handleDeleteTodo}
+                  todo={item}
+                  setOpenModal={setOpenModal}
+                  index={index}
+                  key={item.id}
+                />
+              ))}
             </tbody>
           </table>
         </div>

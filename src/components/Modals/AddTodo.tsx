@@ -71,7 +71,6 @@ const AddTodo = ({ setOpenModal }: IProps) => {
           name: formState.name,
           location: formState.location,
           cgpa: formState.cgpa,
-          type: "update",
         });
 
         dispatch(
